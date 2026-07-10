@@ -1,29 +1,40 @@
-from app.db.db import SessionLocal
-from app.db.crud import get_all_categories, get_all_books
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-def main():
-    db = SessionLocal()
-    
-    try:
-        print("\nКАТЕГОРИИ:")
-        categories = get_all_categories(db)
-        for cat in categories:
-            print(f"{cat.title}")
-        
-        print("\nКНИГИ:")
-        books = get_all_books(db)
-        for book in books:
-            print(f"{book.title}")
-            print(f" Цена: {book.price} руб.")
-            print(f" Категория: {book.category.title}")
-            print(f" Описание: {book.description}")
-            print(f" Ссылка: {book.url}")
-            print()
-        
-    except Exception as e:
-        print(f"ОШИБКА: {e}")
-    finally:
-        db.close()
+from app.api import books, categories
+from app.db.db import engine, Base
+
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(
+    title="Book API",
+    description="API",
+    version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(books.router)
+app.include_router(categories.router)
+
+@app.get("/health", tags=["health"])
+def health_check():
+    return {"status": "ok", "message": "Service is running"}
+
+@app.get("/", tags=["root"])
+def root():
+    return {
+        "message": "Welcome to Book Library API",
+        "docs": "/docs",
+        "health": "/health"
+    }
 
 if __name__ == "__main__":
-    main()
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
