@@ -5,12 +5,15 @@ __pycache__/
 *.so
 .Python
 env/
-venv/
+venv/         
 ENV/
 .venv
 *.egg-info/
 dist/
 build/
+
+# Environment variables
+.env            
 
 # VS Code
 .vscode/
@@ -19,7 +22,5 @@ build/
 # OS
 .DS_Store
 Thumbs.db
-
-# IDE
 .idea/
 *.iml
