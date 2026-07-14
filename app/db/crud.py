@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app.db import models
-
+from sqlalchemy import and_
 
 def create_category(db: Session, title: str):
     new_category = models.Category(title=title)
@@ -20,10 +20,18 @@ def get_category_by_title(db: Session, title: str):
 
 def update_category(db: Session, category_id: int, new_title: str):
     category = get_category_by_id(db, category_id)
-    if category:
+    if not category:
+        return None
+    
+    #проверка уникальности названия
+    if new_title and new_title != category.title:
+        existing = get_category_by_title(db, new_title)
+        if existing:
+            raise ValueError(f"Category with '{new_title}' exists")
         category.title = new_title
         db.commit()
         db.refresh(category)
+    
     return category
 
 def delete_category(db: Session, category_id: int):
@@ -35,6 +43,10 @@ def delete_category(db: Session, category_id: int):
 
 
 def create_book(db: Session, title: str, description: str, price: float, category_id: int, url: str = None):
+    category = get_category_by_id(db, category_id)
+    if not category:
+        raise ValueError(f"Category {category_id} does not exist")
+    
     new_book = models.Book(
         title=title,
         description=description,
@@ -47,23 +59,31 @@ def create_book(db: Session, title: str, description: str, price: float, categor
     db.refresh(new_book)
     return new_book
 
-def get_all_books(db: Session):
-    return db.query(models.Book).all()
+def get_all_books(db: Session, category_id: int = None):
+    query = db.query(models.Book)
+    if category_id is not None:
+        query = query.filter(models.Book.category_id == category_id)
+    return query.all()
 
 def get_book_by_id(db: Session, book_id: int):
     return db.query(models.Book).filter(models.Book.id == book_id).first()
 
-def get_books_by_category(db: Session, category_id: int):
-    return db.query(models.Book).filter(models.Book.category_id == category_id).all()
-
 def update_book(db: Session, book_id: int, **kwargs):
     book = get_book_by_id(db, book_id)
-    if book:
-        for key, value in kwargs.items():
-            if hasattr(book, key) and value is not None:
-                setattr(book, key, value)
-        db.commit()
-        db.refresh(book)
+    if not book:
+        return None
+
+    if 'category_id' in kwargs and kwargs['category_id'] is not None:
+        category = get_category_by_id(db, kwargs['category_id'])
+        if not category:
+            raise ValueError(f"Category {kwargs['category_id']} does not exist")
+    
+    for key, value in kwargs.items():
+        if value is not None and hasattr(book, key):
+            setattr(book, key, value)
+    
+    db.commit()
+    db.refresh(book)
     return book
 
 def delete_book(db: Session, book_id: int):

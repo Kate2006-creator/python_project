@@ -12,7 +12,6 @@ class CategoryUpdate(BaseModel):
 
 class CategoryResponse(CategoryBase):
     id: int
-    
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -34,8 +33,6 @@ class BookUpdate(BaseModel):
     category_id: Optional[int] = None
 
 class BookResponse(BookBase):
-
     id: int
-    category: Optional[CategoryResponse] = None
-    
+    category: Optional[CategoryResponse] = None  
     model_config = ConfigDict(from_attributes=True)

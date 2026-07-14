@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 
 from app.db.db import get_db
 from app.db import crud
-from app.db import models
 from app import schemas
 
 router = APIRouter(prefix="/categories", tags=["categories"])
@@ -27,18 +26,12 @@ def create_category(category: schemas.CategoryCreate, db: Session = Depends(get_
         raise HTTPException(status_code=400, detail="Category with this title already exists")
     return crud.create_category(db, category.title)
 
-@router.put("/{category_id}", response_model=schemas.CategoryResponse)
+@router.put("/{category_id}", response_model=schemas.CategoryResponse) #теперь  1 вызов
 def update_category(category_id: int, category: schemas.CategoryUpdate, db: Session = Depends(get_db)):
-    db_category = crud.get_category_by_id(db, category_id)
-    if not db_category:
+    result = crud.update_category(db, category_id, category.title)
+    if not result:
         raise HTTPException(status_code=404, detail="Category not found")
-    
-    if category.title:
-        existing = crud.get_category_by_title(db, category.title)
-        if existing and existing.id != category_id:
-            raise HTTPException(status_code=400, detail="Category with this title already exists")
-    
-    return crud.update_category(db, category_id, category.title)
+    return result
 
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_category(category_id: int, db: Session = Depends(get_db)):
