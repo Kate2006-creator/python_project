@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 from app.db import models
-from sqlalchemy import and_
 
 def create_category(db: Session, title: str):
     new_category = models.Category(title=title)
@@ -23,11 +22,11 @@ def update_category(db: Session, category_id: int, new_title: str):
     if not category:
         return None
     
-    #проверка уникальности названия
+    # Проверка уникальности названия
     if new_title and new_title != category.title:
         existing = get_category_by_title(db, new_title)
         if existing:
-            raise ValueError(f"Category with '{new_title}' exists")
+            raise ValueError(f"Category with title '{new_title}' already exists")
         category.title = new_title
         db.commit()
         db.refresh(category)
@@ -41,11 +40,10 @@ def delete_category(db: Session, category_id: int):
         db.commit()
     return category
 
-
 def create_book(db: Session, title: str, description: str, price: float, category_id: int, url: str = None):
     category = get_category_by_id(db, category_id)
     if not category:
-        raise ValueError(f"Category {category_id} does not exist")
+        raise ValueError(f"Category with id {category_id} does not exist")
     
     new_book = models.Book(
         title=title,
@@ -76,7 +74,7 @@ def update_book(db: Session, book_id: int, **kwargs):
     if 'category_id' in kwargs and kwargs['category_id'] is not None:
         category = get_category_by_id(db, kwargs['category_id'])
         if not category:
-            raise ValueError(f"Category {kwargs['category_id']} does not exist")
+            raise ValueError(f"Category with id {kwargs['category_id']} does not exist")
     
     for key, value in kwargs.items():
         if value is not None and hasattr(book, key):

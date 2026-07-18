@@ -6,9 +6,10 @@ class Category(Base):
     __tablename__ = "categories"
     
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String(100), nullable=False)
+    title = Column(String(100), nullable=False, unique=True)  # ← UNIQUE в БД!
     
-    books = relationship("Book", back_populates="category")
+    #добавлено каскадное удаление
+    books = relationship("Book", back_populates="category", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"Категория: {self.title}"
@@ -22,7 +23,7 @@ class Book(Base):
     price = Column(Float, nullable=False)
     url = Column(String(500))
 
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="CASCADE"), nullable=False)
 
     category = relationship("Category", back_populates="books")
     

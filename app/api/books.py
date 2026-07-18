@@ -13,10 +13,10 @@ def get_books(
     category_id: Optional[int] = Query(None, description="Фильтр по категории"),
     db: Session = Depends(get_db)
 ):
-    return crud.get_all_books(db, category_id=category_id) #Получить список книг
+    return crud.get_all_books(db, category_id=category_id)
 
 @router.get("/{book_id}", response_model=schemas.BookResponse)
-def get_book(book_id: int, db: Session = Depends(get_db)): #Получить 1 книгу по айди
+def get_book(book_id: int, db: Session = Depends(get_db)):
     book = crud.get_book_by_id(db, book_id)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
@@ -24,23 +24,28 @@ def get_book(book_id: int, db: Session = Depends(get_db)): #Получить 1 �
 
 @router.post("/", response_model=schemas.BookResponse, status_code=status.HTTP_201_CREATED)
 def create_book(book: schemas.BookCreate, db: Session = Depends(get_db)):
-    return crud.create_book(
-        db,
-        title=book.title,
-        description=book.description,
-        price=book.price,
-        category_id=book.category_id,
-        url=book.url
-    )
+    try:
+        return crud.create_book(
+            db,
+            title=book.title,
+            description=book.description,
+            price=book.price,
+            category_id=book.category_id,
+            url=book.url
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.put("/{book_id}", response_model=schemas.BookResponse)
 def update_book(book_id: int, book: schemas.BookUpdate, db: Session = Depends(get_db)):
-    # тут model_dump
-    update_data = book.model_dump(exclude_unset=True)
-    result = crud.update_book(db, book_id, **update_data)
-    if not result:
-        raise HTTPException(status_code=404, detail="Book not found")
-    return result
+    try:
+        update_data = book.model_dump(exclude_unset=True)
+        result = crud.update_book(db, book_id, **update_data)
+        if not result:
+            raise HTTPException(status_code=404, detail="Book not found")
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_book(book_id: int, db: Session = Depends(get_db)):
